@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול Webhooks - Cal.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .settings-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .settings-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            direction: ltr;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .webhook-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            word-break: break-all;
+            direction: ltr;
+            font-family: monospace;
+            font-size: 0.9em;
+            border: 2px dashed #d0d0d0;
+        }
+
+        .agents-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .quick-add {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-add input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.85em;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .agents-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .agents-table th {
+            background: #f7fafc;
+            padding: 12px;
+            text-align: right;
+            font-weight: bold;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .agents-table td {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .agents-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .webhook-cell {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            word-break: break-all;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .copy-btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+
+        .copy-btn:hover {
+            background: #3182ce;
+        }
+
+        .instructions-box {
+            background: #e6fffa;
+            border: 2px solid #38b2ac;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .instructions-box h3 {
+            color: #234e52;
+            margin-bottom: 15px;
+        }
+
+        .instructions-box ol {
+            margin-right: 20px;
+        }
+
+        .instructions-box li {
+            margin-bottom: 8px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .status-active {
+            background: #48bb78;
+        }
+
+        .status-inactive {
+            background: #e53e3e;
+        }
+
+        .preset-agents {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f4f8;
+            border-radius: 8px;
+        }
+
+        .preset-btn {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            background: #cbd5e0;
+        }
+
+        .export-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #48bb78;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 מערכת ניהול Webhooks</h1>
+            <p>יצירת לינקים אוטומטית לכל הסוכנים</p>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="settings-section">
+            <h2>⚙️ הגדרות בסיסיות</h2>
+            
+            <div class="input-group">
+                <label>🔗 Webhook URL הבסיסי (מ-Google Apps Script):</label>
+                <input type="text" id="base-webhook" placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec" 
+                       value="https://script.google.com/macros/s/AKfycbyweIG5Ju7HbDf4Ep8Z9N54SxksX-4VWPv3VvxxoZPK9L94qOtpC6mpi287f3h2XSd1/exec">
+                <small style="color: #666;">זה ה-URL שקיבלת מ-Google Apps Script</small>
+            </div>
+
+            <div class="input-group">
+                <label>📱 מקור ברירת מחדל:</label>
+                <input type="text" id="default-source" value="whatsapp_bot">
+                <small style="color: #666;">אפשר לשנות: facebook, instagram, email וכו'</small>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSettings()">💾 שמור הגדרות</button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions-box">
+            <h3>📋 איך זה עובד?</h3>
+            <ol>
+                <li>הכנס את ה-Webhook URL הבסיסי למעלה</li>
+                <li>הוסף סוכנים לרשימה (שם בעברית + שם באנגלית)</li>
+                <li>המערכת תייצר אוטומטית את ה-Webhook המלא לכל סוכן</li>
+                <li>העתק ושלח לכל סוכן את הלינק שלו</li>
+            </ol>
+        </div>
+
+        <!-- Agents Management -->
+        <div class="agents-section">
+            <h2>👥 ניהול סוכנים</h2>
+            
+            <!-- Quick Add -->
+            <div class="quick-add">
+                <input type="text" id="agent-name-he" placeholder="שם בעברית (לתצוגה)">
+                <input type="text" id="agent-name-en" placeholder="שם באנגלית (ל-URL)" style="direction: ltr;">
+                <input type="text" id="agent-email" placeholder="אימייל (אופציונלי)">
+                <button class="btn btn-success" onclick="addAgent()">➕ הוסף סוכן</button>
+            </div>
+
+            <!-- Preset Agents -->
+            <div class="preset-agents">
+                <strong>הוספה מהירה:</strong>
+                <button class="preset-btn" onclick="addPresetAgent('טל הוניגמן', 'tal_honigman', 'tal@non-ins.co.il')">טל הוניגמן</button>
+                <button class="preset-btn" onclick="addPresetAgent('רועי אזולאי', 'roey_azulay', 'roey@mtn-pension.co.il')">רועי אזולאי</button>
+                <button class="preset-btn" onclick="addPresetAgent('שון אנגברג', 'shon_engberg', 'Sean@mtn-pension.co.il')">שון אנגברג</button>
+                <button class="preset-btn" onclick="addPresetAgent('גד ארבל', 'gad_arbel', 'arbelgad78@gmail.com')">גד ארבל</button>
+                <button class="preset-btn" onclick="addPresetAgent('יוסי כהן', 'yossi_cohen', '')">יוסי כהן</button>
+                <button class="preset-btn" onclick="addPresetAgent('דוד לוי', 'david_levi', '')">דוד לוי</button>
+            </div>
+
+            <!-- Agents Table -->
+            <table class="agents-table">
+                <thead>
+                    <tr>
+                        <th>מס׳</th>
+                        <th>שם הסוכן</th>
+                        <th>שם באנגלית</th>
+                        <th>אימייל</th>
+                        <th>Webhook URL מלא</th>
+                        <th>פעולות</th>
+                        <th>סטטוס</th>
+                    </tr>
+                </thead>
+                <tbody id="agents-tbody">
+                    <!-- Agents will be added here -->
+                </tbody>
+            </table>
+
+            <!-- Export Options -->
+            <div class="export-section">
+                <button class="btn btn-primary" onclick="exportToCSV()">📥 ייצא ל-CSV</button>
+                <button class="btn btn-primary" onclick="exportInstructions()">📄 צור מסמך הוראות</button>
+                <button class="btn btn-primary" onclick="copyAllWebhooks()">📋 העתק את כל הלינקים</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Initialize
+        let agents = JSON.parse(localStorage.getItem('webhook_agents') || '[]');
+        let settings = JSON.parse(localStorage.getItem('webhook_settings') || '{}');
+
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (settings.baseWebhook) {
+                document.getElementById('base-webhook').value = settings.baseWebhook;
+            }
+            if (settings.defaultSource) {
+                document.getElementById('default-source').value = settings.defaultSource;
+            }
+            renderAgents();
+        });
+
+        // Save settings
+        function saveSettings() {
+            settings = {
+                baseWebhook: document.getElementById('base-webhook').value.trim(),
+                defaultSource: document.getElementById('default-source').value.trim() || 'whatsapp_bot'
+            };
+            localStorage.setItem('webhook_settings', JSON.stringify(settings));
+            renderAgents(); // Re-render to update URLs
+            showNotification('הגדרות נשמרו בהצלחה!');
+        }
+
+        // Add agent
+        function addAgent() {
+            const nameHe = document.getElementById('agent-name-he').value.trim();
+            const nameEn = document.getElementById('agent-name-en').value.trim();
+            const email = document.getElementById('agent-email').value.trim();
+
+            if (!nameHe || !nameEn) {
+                alert('נא למלא שם בעברית ובאנגלית');
+                return;
+            }
+
+            const agent = {
+                id: Date.now(),
+                nameHe: nameHe,
+                nameEn: nameEn,
+                email: email,
+                active: true
+            };
+
+            agents.push(agent);
+            saveAgents();
+            
+            // Clear inputs
+            document.getElementById('agent-name-he').value = '';
+            document.getElementById('agent-name-en').value = '';
+            document.getElementById('agent-email').value = '';
+            
+            renderAgents();
+            showNotification(`${nameHe} נוסף בהצלחה!`);
+        }
+
+        // Add preset agent
+        function addPresetAgent(nameHe, nameEn, email) {
+            document.getElementById('agent-name-he').value = nameHe;
+            document.getElementById('agent-name-en').value = nameEn;
+            document.getElementById('agent-email').value = email;
+            addAgent();
+        }
+
+        // Generate webhook URL
+        function generateWebhookUrl(agentNameEn) {
+            const baseUrl = settings.baseWebhook || document.getElementById('base-webhook').value;
+            const source = settings.defaultSource || 'whatsapp_bot';
+            return `${baseUrl}?agent=${agentNameEn}&source=${source}`;
+        }
+
+        // Render agents table
+        function renderAgents() {
+            const tbody = document.getElementById('agents-tbody');
+            
+            if (agents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">אין סוכנים ברשימה</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = agents.map((agent, index) => {
+                const webhookUrl = generateWebhookUrl(agent.nameEn);
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${agent.nameHe}</strong></td>
+                        <td style="direction: ltr;">${agent.nameEn}</td>
+                        <td>${agent.email || '-'}</td>
+                        <td>
+                            <div class="webhook-cell">${webhookUrl}</div>
+                        </td>
+                        <td>
+                            <button class="copy-btn" onclick="copyWebhook('${webhookUrl}', '${agent.nameHe}')">העתק</button>
+                            <button class="copy-btn" onclick="sendInstructions('${agent.nameHe}', '${webhookUrl}', '${agent.email}')">📧</button>
+                            <button class="btn-danger" onclick="removeAgent(${agent.id})">❌ מחק</button>
+                        </td>
+                        <td>
+                            <span class="status-indicator ${agent.active ? 'status-active' : 'status-inactive'}"></span>
+                            ${agent.active ? 'פעיל' : 'לא פעיל'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Copy webhook
+        function copyWebhook(url, agentName) {
+            navigator.clipboard.writeText(url).then(() => {
+                showNotification(`הלינק של ${agentName} הועתק!`);
+            });
+        }
+
+        // Send instructions
+        function sendInstructions(agentName, webhookUrl, email) {
+            const instructions = `
+שלום ${agentName},
+
+הנה ה-Webhook האישי שלך ל-Cal.com:
+
+${webhookUrl}
+
+הוראות הוספה:
+1. היכנס ל-Cal.com שלך
+2. Settings → Webhooks → Create New Webhook
+3. הדבק את הלינק למעלה
+4. בחר: BOOKING_CREATED
+5. לחץ Save
+
+זהו! מעכשיו כל פגישה שתיקבע תירשם במערכת.
+
+בהצלחה!
+            `.trim();
+
+            navigator.clipboard.writeText(instructions).then(() => {
+                showNotification('ההוראות הועתקו! הדבק במייל או בוואטסאפ');
+            });
+        }
+
+        // Remove agent
+        function removeAgent(id) {
+            if (confirm('האם למחוק את הסוכן?')) {
+                agents = agents.filter(a => a.id !== id);
+                saveAgents();
+                renderAgents();
+                showNotification('הסוכן הוסר');
+            }
+        }
+
+        // Save agents
+        function saveAgents() {
+            localStorage.setItem('webhook_agents', JSON.stringify(agents));
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            const csv = [
+                ['שם', 'שם באנגלית', 'אימייל', 'Webhook URL'],
+                ...agents.map(a => [
+                    a.nameHe,
+                    a.nameEn,
+                    a.email || '',
+                    generateWebhookUrl(a.nameEn)
+                ])
+            ].map(row => row.join(',')).join('\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `webhooks_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showNotification('הקובץ יוצא בהצלחה!');
+        }
+
+        // Copy all webhooks
+        function copyAllWebhooks() {
+            const allWebhooks = agents.map(a => 
+                `${a.nameHe}: ${generateWebhookUrl(a.nameEn)}`
+            ).join('\n\n');
+            
+            navigator.clipboard.writeText(allWebhooks).then(() => {
+                showNotification('כל הלינקים הועתקו!');
+            });
+        }
+
+        // Export instructions document
+        function exportInstructions() {
+            const doc = agents.map(a => `
+=================================
+${a.nameHe}
+=================================
+אימייל: ${a.email || 'לא צוין'}
+Webhook URL: ${generateWebhookUrl(a.nameEn)}
+
+הוראות:
+1. היכנס ל-Cal.com
+2. Settings → Webhooks → Create New Webhook
+3. הדבק את ה-URL למעלה
+4. בחר BOOKING_CREATED
+5. Save
+
+---------------------------------
+            `).join('\n\n');
+
+            const blob = new Blob([doc], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `webhook_instructions_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            
+            showNotification('מסמך ההוראות נוצר!');
+        }
+    </script>
+</body>
+</html>
