@@ -1,1 +1,724 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔗 מערכת ניהול Webhooks [DEV]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dev-banner {
+            background: #ff0000;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 50px auto 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border: 3px solid #ff0000;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        
+        .settings-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .settings-section h2 {
+            color: #444;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .help-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .btn-secondary {
+            background: #718096;
+            color: white;
+            margin-left: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+        
+        .instructions {
+            background: #e6f3ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3182ce;
+        }
+        
+        .instructions h3 {
+            color: #2c5aa0;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            margin-right: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        
+        .agents-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .agents-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .add-agent-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .add-agent-form input {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .quick-add-section {
+            margin-bottom: 20px;
+        }
+        
+        .quick-add-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .btn-quick-add {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .btn-quick-add:hover {
+            background: #cbd5e0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f7fafc;
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .webhook-url {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .copy-btn {
+            padding: 6px 12px;
+            font-size: 14px;
+            background: #4299e1;
+            color: white;
+        }
+        
+        .copy-btn:hover {
+            background: #3182ce;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background: #48bb78;
+        }
+        
+        .status-inactive {
+            background: #f56565;
+        }
+        
+        .footer-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin-top: 60px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .add-agent-form {
+                flex-direction: column;
+            }
+            
+            .add-agent-form input {
+                width: 100%;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 10px 5px;
+            }
+            
+            .webhook-url {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dev-banner">
+        ⚠️ גרסת פיתוח (DEV) - לא לשימוש בproduction! ⚠️
+    </div>
+    
+    <div class="container">
+        <h1>🔗 מערכת ניהול Webhooks <span style="color: red; font-size: 0.6em;">[DEV]</span></h1>
+        <p class="subtitle">יצירת לינקים אוטומטית לכל הסוכנים - גרסת פיתוח</p>
+        
+        <div class="settings-section">
+            <h2>⚙️ הגדרות בסיסיות</h2>
+            <div class="input-group">
+                <label for="baseUrl">🔗 Webhook URL הבסיסי (מ-Google Apps Script):</label>
+                <input type="text" id="baseUrl" placeholder="https://script.google.com/macros/s/...">
+                <div class="help-text">זה ה-URL שקיבלת מ-Google Apps Script</div>
+            </div>
+            
+            <div class="input-group">
+                <label for="source">📱 מקור ברירת מחדל:</label>
+                <select id="source">
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">Email</option>
+                    <option value="website">Website</option>
+                    <option value="phone">Phone</option>
+                    <option value="other">אחר</option>
+                </select>
+                <div class="help-text">אפשר לשנות: facebook, instagram, email וכו'</div>
+            </div>
+            
+            <button class="btn-primary" onclick="saveSettings()">💾 שמור הגדרות</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 איך זה עובד?</h3>
+            <ol>
+                <li>הכנס את ה-Webhook URL הבסיסי למעלה</li>
+                <li>הוסף סוכנים לרשימה (שם בעברית + שם באנגלית)</li>
+                <li>המערכת תייצר אוטומטית את ה-Webhook המלא לכל סוכן</li>
+                <li>העתק ושלח לכל סוכן את הלינק שלו</li>
+            </ol>
+        </div>
+        
+        <div class="agents-section">
+            <div class="agents-header">
+                <h2>👥 ניהול סוכנים</h2>
+                <button class="btn-success" onclick="toggleAddForm()">➕ הוסף סוכן</button>
+            </div>
+            
+            <div id="addAgentForm" style="display: none;">
+                <div class="add-agent-form">
+                    <input type="text" id="agentName" placeholder="שם הסוכן בעברית">
+                    <input type="text" id="agentNameEn" placeholder="שם באנגלית">
+                    <input type="email" id="agentEmail" placeholder="אימייל (אופציונלי)">
+                    <button class="btn-primary" onclick="addAgent()">הוסף</button>
+                    <button class="btn-secondary" onclick="toggleAddForm()">ביטול</button>
+                </div>
+                
+                <div class="quick-add-section">
+                    <p style="margin-bottom: 10px;">הוספה מהירה:</p>
+                    <div class="quick-add-buttons">
+                        <button class="btn-quick-add" onclick="quickAddAgent('טל הוניגמן', 'Tal Honigman')">טל הוניגמן</button>
+                        <button class="btn-quick-add" onclick="quickAddAgent('רועי אזולאי', 'Roy Azulay')">רועי אזולאי</button>
+                        <button class="btn-quick-add" onclick="quickAddAgent('שון אנגברג', 'Sean Engberg')">שון אנגברג</button>
+                        <button class="btn-quick-add" onclick="quickAddAgent('גד ארבל', 'Gad Arbel')">גד ארבל</button>
+                        <button class="btn-quick-add" onclick="quickAddAgent('יוסי כהן', 'Yossi Cohen')">יוסי כהן</button>
+                        <button class="btn-quick-add" onclick="quickAddAgent('דוד לוי', 'David Levy')">דוד לוי</button>
+                    </div>
+                </div>
+            </div>
+            
+            <table id="agentsTable">
+                <thead>
+                    <tr>
+                        <th>מס׳</th>
+                        <th>שם הסוכן</th>
+                        <th>שם באנגלית</th>
+                        <th>אימייל</th>
+                        <th>Webhook URL מלא</th>
+                        <th>פעולות</th>
+                        <th>סטטוס</th>
+                    </tr>
+                </thead>
+                <tbody id="agentsTableBody">
+                </tbody>
+            </table>
+            
+            <div class="footer-actions">
+                <button class="btn-primary" onclick="exportToCSV()">📥 ייצא ל-CSV</button>
+                <button class="btn-primary" onclick="createInstructionsDoc()">📄 צור מסמך הוראות</button>
+                <button class="btn-primary" onclick="copyAllLinks()">📋 העתק את כל הלינקים</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
 
+    <script>
+        // הגנת סיסמה פשוטה
+        const PASSWORD = "dev123"; // שנה את הסיסמה לפי הצורך
+        const isAuthenticated = sessionStorage.getItem('authenticated_dev');
+        
+        if (!isAuthenticated) {
+            const userPassword = prompt("אנא הכנס סיסמה לגישה למערכת הפיתוח:");
+            if (userPassword !== PASSWORD) {
+                document.body.innerHTML = `
+                    <div style="text-align: center; margin-top: 100px; font-family: Arial;">
+                        <h1>🔒 גישה נדחתה</h1>
+                        <p>הסיסמה שהוזנה אינה נכונה</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 20px; cursor: pointer;">
+                            נסה שוב
+                        </button>
+                    </div>
+                `;
+            } else {
+                sessionStorage.setItem('authenticated_dev', 'true');
+            }
+        }
+        
+        // משתנים גלובליים
+        let agents = [];
+        let baseUrl = '';
+        let defaultSource = 'facebook';
+        
+        // טעינת נתונים מ-localStorage - שימו לב לשינוי ב-keys!
+        function loadData() {
+            const savedBaseUrl = localStorage.getItem('webhookBaseUrl_DEV');
+            const savedSource = localStorage.getItem('webhookSource_DEV');
+            const savedAgents = localStorage.getItem('webhookAgents_DEV');
+            
+            if (savedBaseUrl) {
+                baseUrl = savedBaseUrl;
+                document.getElementById('baseUrl').value = baseUrl;
+            }
+            
+            if (savedSource) {
+                defaultSource = savedSource;
+                document.getElementById('source').value = defaultSource;
+            }
+            
+            if (savedAgents) {
+                agents = JSON.parse(savedAgents);
+                updateTable();
+            }
+        }
+        
+        // שמירת הגדרות
+        function saveSettings() {
+            baseUrl = document.getElementById('baseUrl').value;
+            defaultSource = document.getElementById('source').value;
+            
+            localStorage.setItem('webhookBaseUrl_DEV', baseUrl);
+            localStorage.setItem('webhookSource_DEV', defaultSource);
+            
+            updateTable();
+            showToast('ההגדרות נשמרו בהצלחה! 🎉 [DEV]');
+        }
+        
+        // הצגת/הסתרת טופס הוספת סוכן
+        function toggleAddForm() {
+            const form = document.getElementById('addAgentForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            
+            if (form.style.display === 'block') {
+                document.getElementById('agentName').focus();
+            }
+        }
+        
+        // הוספת סוכן
+        function addAgent() {
+            const name = document.getElementById('agentName').value.trim();
+            const nameEn = document.getElementById('agentNameEn').value.trim();
+            const email = document.getElementById('agentEmail').value.trim();
+            
+            if (!name || !nameEn) {
+                showToast('נא למלא את השם בעברית ובאנגלית ⚠️');
+                return;
+            }
+            
+            const agent = {
+                id: Date.now(),
+                name,
+                nameEn,
+                email,
+                active: true
+            };
+            
+            agents.push(agent);
+            localStorage.setItem('webhookAgents_DEV', JSON.stringify(agents));
+            
+            // נקה את השדות
+            document.getElementById('agentName').value = '';
+            document.getElementById('agentNameEn').value = '';
+            document.getElementById('agentEmail').value = '';
+            
+            updateTable();
+            showToast(`הסוכן ${name} נוסף בהצלחה! ✅ [DEV]`);
+            
+            // החזר פוקוס לשדה הראשון
+            document.getElementById('agentName').focus();
+        }
+        
+        // הוספה מהירה של סוכן
+        function quickAddAgent(name, nameEn) {
+            const agent = {
+                id: Date.now(),
+                name,
+                nameEn,
+                email: '',
+                active: true
+            };
+            
+            agents.push(agent);
+            localStorage.setItem('webhookAgents_DEV', JSON.stringify(agents));
+            updateTable();
+            showToast(`הסוכן ${name} נוסף בהצלחה! ✅ [DEV]`);
+        }
+        
+        // יצירת URL מלא
+        function generateWebhookUrl(agent) {
+            if (!baseUrl) return 'נא להגדיר URL בסיסי';
+            
+            const params = new URLSearchParams({
+                source: defaultSource,
+                agent_name: agent.nameEn,
+                agent_name_hebrew: agent.name
+            });
+            
+            return `${baseUrl}?${params.toString()}`;
+        }
+        
+        // עדכון הטבלה
+        function updateTable() {
+            const tbody = document.getElementById('agentsTableBody');
+            tbody.innerHTML = '';
+            
+            agents.forEach((agent, index) => {
+                const webhookUrl = generateWebhookUrl(agent);
+                const row = tbody.insertRow();
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${agent.name}</td>
+                    <td>${agent.nameEn}</td>
+                    <td>${agent.email || '-'}</td>
+                    <td><div class="webhook-url">${webhookUrl}</div></td>
+                    <td>
+                        <button class="copy-btn" onclick="copyToClipboard('${webhookUrl}', '${agent.name}')">העתק</button>
+                        <button class="btn-danger" onclick="removeAgent(${agent.id})">מחק</button>
+                    </td>
+                    <td>
+                        <span class="status-indicator ${agent.active ? 'status-active' : 'status-inactive'}"></span>
+                        ${agent.active ? 'פעיל' : 'לא פעיל'}
+                    </td>
+                `;
+            });
+        }
+        
+        // מחיקת סוכן
+        function removeAgent(id) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את הסוכן?')) {
+                agents = agents.filter(agent => agent.id !== id);
+                localStorage.setItem('webhookAgents_DEV', JSON.stringify(agents));
+                updateTable();
+                showToast('הסוכן נמחק בהצלחה 🗑️ [DEV]');
+            }
+        }
+        
+        // העתקה ללוח
+        function copyToClipboard(text, agentName) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`הלינק של ${agentName} הועתק ללוח! 📋 [DEV]`);
+            });
+        }
+        
+        // העתקת כל הלינקים
+        function copyAllLinks() {
+            let allLinks = '';
+            agents.forEach(agent => {
+                const url = generateWebhookUrl(agent);
+                allLinks += `${agent.name}:\n${url}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(allLinks).then(() => {
+                showToast('כל הלינקים הועתקו ללוח! 📋 [DEV]');
+            });
+        }
+        
+        // ייצוא ל-CSV
+        function exportToCSV() {
+            let csv = '\ufeff'; // BOM for Hebrew
+            csv += 'שם,שם באנגלית,אימייל,Webhook URL\n';
+            
+            agents.forEach(agent => {
+                const url = generateWebhookUrl(agent);
+                csv += `"${agent.name}","${agent.nameEn}","${agent.email || ''}","${url}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `webhook_agents_DEV_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast('הקובץ יורד... 📥 [DEV]');
+        }
+        
+        // יצירת מסמך הוראות
+        function createInstructionsDoc() {
+            let doc = `מערכת Webhook - הוראות שימוש [גרסת פיתוח]
+=============================
+
+תאריך: ${new Date().toLocaleDateString('he-IL')}
+
+⚠️ זהירות: זו גרסת פיתוח! ⚠️
+
+רשימת סוכנים ולינקים:
+----------------------`;
+            
+            agents.forEach((agent, index) => {
+                const url = generateWebhookUrl(agent);
+                doc += `\n\n${index + 1}. ${agent.name}
+   אימייל: ${agent.email || 'לא הוגדר'}
+   לינק: ${url}`;
+            });
+            
+            doc += `\n\nהוראות שימוש:
+--------------
+1. העתק את הלינק האישי שלך מהרשימה למעלה
+2. השתמש בלינק זה בכל הטפסים/מקורות הלידים שלך
+3. כל ליד שיישלח דרך הלינק שלך יתויג אוטומטית בשמך
+
+לתמיכה טכנית: [הכנס פרטי קשר כאן]`;
+            
+            const blob = new Blob([doc], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `webhook_instructions_DEV_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            
+            showToast('מסמך ההוראות נוצר! 📄 [DEV]');
+        }
+        
+        // הצגת הודעה
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // טעינת הנתונים בעת טעינת הדף
+        window.onload = loadData;
+        
+        // תמיכה ב-Enter בשדות ההוספה
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['agentName', 'agentNameEn', 'agentEmail'];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            addAgent();
+                        }
+                    });
+                }
+            });
+            
+            // הודעת אזהרה נוספת
+            console.log('%c⚠️ זו גרסת פיתוח! ⚠️', 'color: red; font-size: 20px; font-weight: bold;');
+        });
+    </script>
+</body>
+</html>
